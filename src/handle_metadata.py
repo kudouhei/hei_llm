@@ -1,31 +1,35 @@
-import nbformat
+import json
 
-def fix_missing_widgets_state(input_file, output_file=None):
+def fix_widgets_state_via_text(input_file, output_file=None):
     """
-    修复 Jupyter Notebook 中 metadata.widgets 缺少 'state' 键的问题
+    通过文本处理修复 .ipynb 文件中 metadata.widgets 缺少的 'state' 键
     
     参数:
-        input_file (str): 输入的 .ipynb 文件路径
-        output_file (str): 输出的 .ipynb 文件路径 (默认覆盖原文件)
+        input_file (str): input .ipynb file path
+        output_file (str): output .ipynb file path (default overwrite original file)
     """
     if output_file is None:
         output_file = input_file
     
+    # read file as text
     with open(input_file, 'r', encoding='utf-8') as f:
-        nb = nbformat.read(f, as_version=4)
+        content = f.read()
     
-    # check widgets
-    if 'metadata' in nb and 'widgets' in nb['metadata']:
-        widgets = nb['metadata']['widgets']
+    # parse to dict
+    notebook = json.loads(content)
+    
+    # check and fix widgets
+    if 'metadata' in notebook and 'widgets' in notebook['metadata']:
+        widgets = notebook['metadata']['widgets']
         for widget in widgets:
             if 'state' not in widget:
-                widget['state'] = {}  # add state 
-                print(f"为 widget {widget.get('model_id', 'unknown')} added state")
+                widget['state'] = {}  # add empty state dict
     
-    # save fixed notebook
+    # save as json
     with open(output_file, 'w', encoding='utf-8') as f:
-        nbformat.write(nb, f)
-    print(f"saved to: {output_file}")
+        json.dump(notebook, f, indent=2, ensure_ascii=False)
+    
+    print(f"fixed, saved to: {output_file}")
 
 # execute
-fix_missing_widgets_state("Text_embedding_model_v1.ipynb")  # overwrite original file
+fix_widgets_state_via_text("Text_embedding_model_v1.ipynb")
